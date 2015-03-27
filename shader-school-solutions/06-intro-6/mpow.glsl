@@ -7,7 +7,17 @@ mat2 matrixPower(highp mat2 m, int n) {
   //  matrixPower(m, 2) = m * m
   //
 
-  return mat2(1.0);  
+  highp mat2 r = mat2(m);
+
+  for(int i = 0; i < 16 - 1 ; ++i) {
+    if(i < n - 1) {
+      r = r * m;
+    } else {
+      break;
+    }
+  }
+
+  return r;  
 }
 
 //Do not change this line or the name of the above function
