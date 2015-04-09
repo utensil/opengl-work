@@ -15,40 +15,52 @@ uniform vec3 ambient;
 uniform vec3 diffuse;
 uniform vec3 lightDirection;
 
-// all incoming light is traveling in the same direction, d. Then Lambert's cosine law 
-// says that the amount of diffuse light emitted from a point the surface with a normal
-// vector n is proportional to the following weight:
-float lambertWeight(vec3 n, vec3 d) {
-  return max(dot(n, d), 0.0);
-}
+varying vec3 fragNormal;
 
-// the light reflected at a point on the surface:
-vec3 reflectedLight(
-  vec3 normal,
-  vec3 lightDirection,
-  vec3 ambient,
-  vec3 diffuse
-) {
-  float brightness = dot(normal, lightDirection);
-  return ambient + diffuse * max(brightness, 0.0);
-}
+/**
+Normals vectors are transformed in different way as vertices do.
 
-// given a test point p, the distance along the normal direction at a point on the surface
-// is given by the following function:
+Let's say vertices are transformed by matrix M. We cannot simply multiply M and normal.
 
-float parallelDistance(
-  vec3 surfacePoint,
-  vec3 surfaceNormal,
-  vec3 p
-) {
-  return dot(p - surfacePoint, surfaceNormal);
-}
+A normal to the surface at a point P is a vector that is perpendicular to the tangent plane to that surface at P.
+So normal is just a way to represent the plane, we just need to transform the normal in a way that the surface 
+will be properly transformed.
 
-// if we transform the surface into world coordinates using a model transformation, model.
-// Then this should be equivalent to moving the input test point by the inverse of model. 
-// This means that in order for the above function to remain invariant, the surface normal 
-// must transform by the inverse transpose of model.
+Any point Q on that plane satisfies the following equation:
 
+dot(n, P - Q) = 0
+
+that's simply the same as saying the tangent plane is perpendicular to normal.
+
+dot(n, P - Q) can be written as dot(n, P) - dot(n, Q) = 0
+
+It would be convinient to choose a Q that satisfies dot(n, Q), then the equation
+above would be simplified to:
+
+dot(n, P) = 0 
+
+Rewrite the above to matrix multiplication:
+
+n^T P = 0 i.e. n^T M^-1 M P = 0             1)
+
+The transformed P (mark it as P') and tranformed n (mark it as n') should satisfy:
+
+n'^T P' = 0                                 2)
+
+P'= MP                                      3)
+
+Incorporat 1, 2 and 3, we have:
+
+n'^T = n^T M^-1
+   
+See also 
+
+  * http://www.songho.ca/opengl/gl_normaltransform.html
+  * http://en.wikipedia.org/wiki/Normal_(geometry)
+
+*/
 void main() {
-  gl_Position = vec4(position, 1);
+  gl_Position = projection * view * model * vec4(position, 1.0);
+   // Note: don't multiply inverseProjection
+  fragNormal = (vec4(normal, 0.0) * inverseModel * inverseView).xyz;
 }
